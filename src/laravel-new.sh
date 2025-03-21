@@ -3,20 +3,15 @@
 # Function to display help information
 show_help() {
     echo "Created by Bachrul Uluum[@uluumbch] for simplicity"
-    echo "Usage: $(basename "$0") [APP_NAME] [--with=services]"
+    echo "Usage: $(basename "$0")"
     echo ""
     echo "Automates Laravel project creation using Laravel Sail inside Docker."
-    echo ""
-    echo "Arguments:"
-    echo "  APP_NAME        Optional. The name of the Laravel application to create."
-    echo "  --with=SERVICES Optional. A comma-separated list of services to install with Sail."
     echo ""
     echo "Options:"
     echo "  -h, --help      Show this help message and exit."
     echo ""
     echo "Examples:"
-    echo "  ./$(basename "$0") my-laravel-app                     # Create Laravel project with default services."
-    echo "  ./$(basename "$0") my-laravel-app --with=mysql,redis  # Create Laravel project with only MySQL and Redis."
+    echo "  Run the script and input project details interactively."
     exit 0
 }
 
@@ -25,17 +20,16 @@ if [[ "$1" == "-h" || "$1" == "--help" ]]; then
     show_help
 fi
 
-# Default values
-APP_NAME="my-laravel-app"
-SERVICES="mysql,redis,meilisearch,mailpit,selenium"  # Default services
+# Ask for APP_NAME
+read -rp "Enter Laravel project name (default: my-laravel-app): " APP_NAME
+APP_NAME="${APP_NAME:-my-laravel-app}"  # Use default if empty
 
-# Read arguments
-for arg in "$@"; do
-    case $arg in
-        --with=*) SERVICES="${arg#*=}"; shift ;;
-        *) APP_NAME="$arg" ;;
-    esac
-done
+# Ask for SERVICES
+read -rp "Enter services to install (default: mysql,redis,meilisearch,mailpit,selenium): " SERVICES
+SERVICES="${SERVICES:-mysql,redis,meilisearch,mailpit,selenium}"  # Use default if empty
+
+echo "Creating Laravel project '$APP_NAME' with services: $SERVICES..."
+sleep 1  # Small delay for better UX
 
 docker info > /dev/null 2>&1
 
@@ -61,12 +55,12 @@ else
 fi
 
 CYAN='\033[0;36m'
-LIGHT_CYAN='\033[1;36m'
 BOLD='\033[1m'
 NC='\033[0m'
 
 echo ""
 
+# Check for sudo or doas
 if command -v doas &>/dev/null; then
     SUDO="doas"
 elif command -v sudo &>/dev/null; then
@@ -76,13 +70,14 @@ else
     exit 1
 fi
 
+# Set correct permissions
 if $SUDO -n true 2>/dev/null; then
     $SUDO chown -R $USER: .
     echo -e "${BOLD}Get started with:${NC} cd $APP_NAME && ./vendor/bin/sail up"
 else
-    echo -e "${BOLD}Please provide your password so we can make some final adjustments to your application's permissions.${NC}"
+    echo -e "${BOLD}Please provide your password to set the correct permissions.${NC}"
     echo ""
     $SUDO chown -R $USER: .
     echo ""
-    echo -e "${BOLD}Thank you! We hope you build something incredible. Dive in with:${NC} cd $APP_NAME && ./vendor/bin/sail up"
+    echo -e "${BOLD}Thank you! Start your Laravel project with:${NC} cd $APP_NAME && ./vendor/bin/sail up"
 fi
