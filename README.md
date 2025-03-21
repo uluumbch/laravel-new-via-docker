@@ -5,7 +5,7 @@ A simple script for running laravel installer via docker without need to install
 ## Download the script
 1. run
    ```
-   curl -sL https://github.com/uluumbch/laravel-new-via-docker/releases/latest/download/laravel-new.sh -o laravel-new.sh
+   /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/uluumbch/laravel-new-via-docker/HEAD/src/laravel-new.sh)"
    ```
 3. change permission
    ```
