@@ -1,20 +1,5 @@
 #!/bin/bash
 
-# Function to display help information
-show_help() {
-    echo "Created by Bachrul Uluum[@uluumbch] for simplicity"
-    echo "Usage: $(basename "$0")"
-    echo ""
-    echo "Automates Laravel project creation using Laravel Sail inside Docker."
-    echo ""
-    echo "Options:"
-    echo "  -h, --help      Show this help message and exit."
-    echo ""
-    echo "Examples:"
-    echo "  Run the script and input project details interactively."
-    exit 0
-}
-
 # Check for help option
 if [[ "$1" == "-h" || "$1" == "--help" ]]; then
     show_help
@@ -44,7 +29,7 @@ docker run --rm --interactive --tty \
     --pull=always \
     -v "$(pwd)":/opt \
     -w /opt \
-    laravelsail/php84-composer:latest \
+    ghcr.io/uluumbch/laravel-new-via-docker:latest \
     bash -c "laravel new $APP_NAME && cd $APP_NAME && php ./artisan sail:install --with=$SERVICES --devcontainer"
 
 if [ -d "$APP_NAME" ]; then
