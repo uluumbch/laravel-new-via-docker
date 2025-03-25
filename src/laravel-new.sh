@@ -45,7 +45,7 @@ docker run --rm --interactive --tty \
     -v "$(pwd)":/opt \
     -w /opt \
     laravelsail/php84-composer:latest \
-    bash -c "laravel new $APP_NAME --no-interaction && cd $APP_NAME && php ./artisan sail:install --with=$SERVICES"
+    bash -c "laravel new $APP_NAME && cd $APP_NAME && php ./artisan sail:install --with=$SERVICES --devcontainer"
 
 if [ -d "$APP_NAME" ]; then
     cd "$APP_NAME"
