@@ -39,6 +39,36 @@ else
     exit 1
 fi
 
+# Create alias.bashrc in .devcontainer folder
+if [ -d ".devcontainer" ]; then
+    cat > .devcontainer/alias.bashrc << 'EOL'
+#!/bin/bash
+
+# PHP aliases
+alias pa="php artisan"
+alias pint="vendor/bin/pint"
+
+# Node/NPM aliases
+alias npd='npm run dev'
+EOL
+
+    echo "Created .devcontainer/alias.bashrc with  aliases"
+
+    # Update devcontainer.json postCreateCommand
+    if [ -f ".devcontainer/devcontainer.json" ]; then
+        # Use jq if available
+        if command -v jq &>/dev/null; then
+            jq '. += {"postCreateCommand": "chown -R 1000:1000 /var/www/html 2>/dev/null || true && cp ${containerWorkspaceFolder}/.devcontainer/alias.bashrc ~/.bash_aliases"}' .devcontainer/devcontainer.json > .devcontainer/devcontainer.json.tmp && \
+            mv .devcontainer/devcontainer.json.tmp .devcontainer/devcontainer.json
+        else
+            # Fallback to sed if jq isn't available
+            sed -i.bak 's|"postCreateCommand": "chown -R 1000:1000 /var/www/html 2>/dev/null || true"|"postCreateCommand": "chown -R 1000:1000 /var/www/html 2>/dev/null || true \&\& cp ${containerWorkspaceFolder}/.devcontainer/alias.bashrc ~/.bash_aliases"|g' .devcontainer/devcontainer.json
+            rm -f .devcontainer/devcontainer.json.bak
+        fi
+        echo "Updated .devcontainer/devcontainer.json postCreateCommand"
+    fi
+fi
+
 CYAN='\033[0;36m'
 BOLD='\033[1m'
 NC='\033[0m'
