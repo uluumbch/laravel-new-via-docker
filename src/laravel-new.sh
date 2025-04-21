@@ -62,7 +62,7 @@ EOL
             mv .devcontainer/devcontainer.json.tmp .devcontainer/devcontainer.json
         else
             # Fallback to sed if jq isn't available
-            sed -i.bak 's|"postCreateCommand": "chown -R 1000:1000 /var/www/html 2>/dev/null || true"|"postCreateCommand": "chown -R 1000:1000 /var/www/html 2>/dev/null || true \&\& cp ${containerWorkspaceFolder}/.devcontainer/alias.bashrc ~/.bash_aliases"|g' .devcontainer/devcontainer.json
+            sed -i.bak 's#"postCreateCommand": "chown -R 1000:1000 /var/www/html 2>/dev/null || true"#"postCreateCommand": "chown -R 1000:1000 /var/www/html 2>/dev/null || true && cp ${containerWorkspaceFolder}/.devcontainer/alias.bashrc ~/.bash_aliases"#g' .devcontainer/devcontainer.json
             rm -f .devcontainer/devcontainer.json.bak
         fi
         echo "Updated .devcontainer/devcontainer.json postCreateCommand"
