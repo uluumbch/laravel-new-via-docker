@@ -34,6 +34,29 @@ docker run --rm --interactive --tty \
 
 if [ -d "$APP_NAME" ]; then
     cd "$APP_NAME"
+    
+    echo "Setting correct permissions for project files..."
+    # Check for sudo or doas
+    if command -v doas &>/dev/null; then
+        SUDO_CMD="doas"
+    elif command -v sudo &>/dev/null; then
+        SUDO_CMD="sudo"
+    else
+        echo "Neither sudo nor doas is available. Cannot set file ownership. Subsequent operations might fail."
+    
+        SUDO_CMD="" # Ensure SUDO_CMD is defined to avoid unbound variable error
+    fi
+
+    if [ -n "$SUDO_CMD" ]; then # Only proceed if sudo or doas is found
+        if $SUDO_CMD -n true 2>/dev/null; then # Check if passwordless sudo is possible
+            $SUDO_CMD chown -R $USER: .
+        else
+            echo "Please provide your password to set the correct permissions for the project files."
+            $SUDO_CMD chown -R $USER: .
+        fi
+        echo "File permissions updated."
+    fi
+
 else
     echo "Laravel installation failed. Check the logs above."
     exit 1
@@ -52,7 +75,7 @@ alias pint="vendor/bin/pint"
 alias npd='npm run dev'
 EOL
 
-    echo "Created .devcontainer/alias.bashrc with  aliases"
+    echo "Created .devcontainer/alias.bashrc with aliases"
 
     # Update devcontainer.json postCreateCommand
     if [ -f ".devcontainer/devcontainer.json" ]; then
@@ -66,7 +89,11 @@ EOL
             rm -f .devcontainer/devcontainer.json.bak
         fi
         echo "Updated .devcontainer/devcontainer.json postCreateCommand"
+    else
+        echo "Warning: .devcontainer/devcontainer.json not found. Cannot update postCreateCommand."
     fi
+else
+    echo "Warning: .devcontainer directory not found. Cannot create alias.bashrc or update devcontainer.json."
 fi
 
 CYAN='\033[0;36m'
@@ -74,25 +101,4 @@ BOLD='\033[1m'
 NC='\033[0m'
 
 echo ""
-
-# Check for sudo or doas
-if command -v doas &>/dev/null; then
-    SUDO="doas"
-elif command -v sudo &>/dev/null; then
-    SUDO="sudo"
-else
-    echo "Neither sudo nor doas is available. Exiting."
-    exit 1
-fi
-
-# Set correct permissions
-if $SUDO -n true 2>/dev/null; then
-    $SUDO chown -R $USER: .
-    echo -e "${BOLD}Get started with:${NC} cd $APP_NAME && ./vendor/bin/sail up"
-else
-    echo -e "${BOLD}Please provide your password to set the correct permissions.${NC}"
-    echo ""
-    $SUDO chown -R $USER: .
-    echo ""
-    echo -e "${BOLD}Thank you! Start your Laravel project with:${NC} cd $APP_NAME && ./vendor/bin/sail up"
-fi
+echo -e "${BOLD}Get started with:${NC} cd $APP_NAME && ./vendor/bin/sail up"
