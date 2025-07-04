@@ -1,5 +1,19 @@
 #!/bin/bash
 
+# A function to show help information
+show_help() {
+    echo "Usage: $(basename "$0")"
+    echo "This script creates a new Laravel project using Docker and Laravel Sail."
+    echo "more info at: https://github.dev/uluumbch/laravel-new-via-docker"
+    echo
+    echo "It will prompt for the project name and the services to install."
+    echo
+    echo "Options:"
+    echo "  -h, --help    Show this help message and exit."
+    exit 0
+}
+
+
 # Check for help option
 if [[ "$1" == "-h" || "$1" == "--help" ]]; then
     show_help
@@ -33,8 +47,8 @@ docker run --rm --interactive --tty \
     bash -c "laravel new $APP_NAME && cd $APP_NAME && php ./artisan sail:install --with=$SERVICES --devcontainer"
 
 if [ -d "$APP_NAME" ]; then
-    cd "$APP_NAME"
-    
+    cd "$APP_NAME" || exit
+
     echo "Setting correct permissions for project files..."
     # Check for sudo or doas
     if command -v doas &>/dev/null; then
@@ -43,16 +57,15 @@ if [ -d "$APP_NAME" ]; then
         SUDO_CMD="sudo"
     else
         echo "Neither sudo nor doas is available. Cannot set file ownership. Subsequent operations might fail."
-    
         SUDO_CMD="" # Ensure SUDO_CMD is defined to avoid unbound variable error
     fi
 
     if [ -n "$SUDO_CMD" ]; then # Only proceed if sudo or doas is found
         if $SUDO_CMD -n true 2>/dev/null; then # Check if passwordless sudo is possible
-            $SUDO_CMD chown -R $USER: .
+            $SUDO_CMD chown -R "$USER:" .
         else
             echo "Please provide your password to set the correct permissions for the project files."
-            $SUDO_CMD chown -R $USER: .
+            $SUDO_CMD chown -R "$USER:" .
         fi
         echo "File permissions updated."
     fi
@@ -79,13 +92,14 @@ EOL
 
     # Update devcontainer.json postCreateCommand
     if [ -f ".devcontainer/devcontainer.json" ]; then
-        # Use jq if available
+        # Use jq if available, as it's safer for JSON manipulation
         if command -v jq &>/dev/null; then
-            jq '. += {"postCreateCommand": "chown -R 1000:1000 /var/www/html 2>/dev/null || true && cp ${containerWorkspaceFolder}/.devcontainer/alias.bashrc ~/.bash_aliases"}' .devcontainer/devcontainer.json > .devcontainer/devcontainer.json.tmp && \
+            jq '.postCreateCommand = "chown -R 1000:1000 /var/www/html 2>/dev/null || true && cp \${containerWorkspaceFolder}/.devcontainer/alias.bashrc ~/.bash_aliases"' .devcontainer/devcontainer.json > .devcontainer/devcontainer.json.tmp && \
             mv .devcontainer/devcontainer.json.tmp .devcontainer/devcontainer.json
         else
-            # Fallback to sed if jq isn't available
-            sed -i.bak 's#"postCreateCommand": "chown -R 1000:1000 /var/www/html 2>/dev/null || true"#"postCreateCommand": "chown -R 1000:1000 /var/www/html 2>/dev/null || true && cp ${containerWorkspaceFolder}/.devcontainer/alias.bashrc ~/.bash_aliases"#g' .devcontainer/devcontainer.json
+            # Fallback to a more robust sed command if jq isn't available
+            # This finds the postCreateCommand line and replaces its value, preserving a potential trailing comma.
+            sed -i.bak 's#^\(\s*"postCreateCommand":\s*"\)[^"]*"\(\s*,*\s*\)$#\1chown -R 1000:1000 /var/www/html 2>/dev/null || true \&\& cp \${containerWorkspaceFolder}/.devcontainer/alias.bashrc ~/.bash_aliases"\2#' .devcontainer/devcontainer.json
             rm -f .devcontainer/devcontainer.json.bak
         fi
         echo "Updated .devcontainer/devcontainer.json postCreateCommand"
