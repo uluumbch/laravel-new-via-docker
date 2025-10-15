@@ -19,44 +19,15 @@ jobs:
         run: |
           echo "${{ github.token }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
 
-      - name: Install expect
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y expect
-
-      - name: Run installer end-to-end via Expect
+      - name: Run script non-interactively (AUTO_ACCEPT)
         env:
           APP_NAME: ci-laravel-app
           SERVICES: mysql,redis
+          AUTO_ACCEPT: "1"
         run: |
           set -euxo pipefail
           mkdir -p e2e && cd e2e
-
-          expect <<'EXPECTSCRIPT'
-          set timeout -1
-          # Spawn the script
-          spawn bash "$env(GITHUB_WORKSPACE)/src/laravel-new.sh"
-
-          # Answer initial Bash prompts
-          expect {
-            -re {Enter Laravel project name} { send -- "$env(APP_NAME)\r" }
-            timeout { exit 1 }
-          }
-          expect {
-            -re {Enter services to install} { send -- "$env(SERVICES)\r" }
-            timeout { exit 1 }
-          }
-
-          # Handle installer prompts; accept defaults by pressing Enter
-          expect {
-            -re {Which starter kit would you like to install\?} { send -- "\r"; exp_continue }
-            -re {Which testing framework do you prefer\?} { send -- "\r"; exp_continue }
-            -re {Which database will your application use\?} { send -- "\r"; exp_continue }
-            -re {Would you like to run the default database migrations\?} { send -- "\r"; exp_continue }
-            eof {}
-            timeout { exit 1 }
-          }
-          EXPECTSCRIPT
+          bash "${GITHUB_WORKSPACE}/src/laravel-new.sh"
 
       - name: Assert generated files
         run: |
