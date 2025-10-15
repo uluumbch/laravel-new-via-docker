@@ -1,0 +1,38 @@
+name: E2E
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Login to GHCR (avoid anonymous pull limits)
+        run: |
+          echo "${{ github.token }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+
+      - name: Run script non-interactively (AUTO_ACCEPT)
+        env:
+          APP_NAME: ci-laravel-app
+          SERVICES: mysql,redis
+          AUTO_ACCEPT: "1"
+        run: |
+          set -euxo pipefail
+          mkdir -p e2e && cd e2e
+          bash "${GITHUB_WORKSPACE}/src/laravel-new.sh"
+
+      - name: Assert generated files
+        run: |
+          set -euxo pipefail
+          test -d "e2e/ci-laravel-app"
+          test -f "e2e/ci-laravel-app/.devcontainer/alias.bashrc"
+          test -f "e2e/ci-laravel-app/.devcontainer/devcontainer.json"
+          grep -q '"postCreateCommand"' "e2e/ci-laravel-app/.devcontainer/devcontainer.json"
