@@ -27,9 +27,29 @@ APP_NAME="${APP_NAME:-my-laravel-app}"  # Use default if empty
 
 # Ask for SERVICES only if not provided via env
 if [ -z "${SERVICES:-}" ]; then
-    read -rp "Enter services to install (default: mysql,redis,meilisearch,mailpit,selenium): " SERVICES
+    cat <<'EOF'
+
+Available services:
+  - mariadb
+  - meilisearch
+  - memcached
+  - minio
+  - mongodb
+  - mysql
+  - pgsql
+  - rabbitmq
+  - redis
+  - rustfs
+  - selenium
+  - soketi
+  - typesense
+  - valkey
+
+EOF
+
+    read -rp "Enter services to install (default: mysql,redis,mailpit): " SERVICES
 fi
-SERVICES="${SERVICES:-mysql,redis,meilisearch,mailpit,selenium}"  # Use default if empty
+SERVICES="${SERVICES:-mysql,redis,mailpit}"  # Use default if empty
 
 echo "Creating Laravel project '$APP_NAME' with services: $SERVICES..."
 sleep 1  # Small delay for better UX
