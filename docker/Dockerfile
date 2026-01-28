@@ -15,7 +15,8 @@ RUN apt-get update && apt-get install -y \
     ca-certificates \
     apt-transport-https \
     software-properties-common \
-    gnupg2
+    gnupg2 \
+    && rm -rf /var/lib/apt/lists/*
 
 # Add Sury PHP repository (alternative to PPA for Debian)
 RUN curl -sSLo /usr/share/keyrings/deb.sury.org-php.gpg https://packages.sury.org/php/apt.gpg \
