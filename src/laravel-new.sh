@@ -129,28 +129,46 @@ EOL
 
     echo "Created .devcontainer/alias.bashrc with aliases"
 
-    # Update devcontainer.json postCreateCommand
+    # Update devcontainer.json from stub
     if [ -f ".devcontainer/devcontainer.json" ]; then
-        # Use jq if available, as it's safer for JSON manipulation
-        if command -v jq &>/dev/null; then
-            tmpfile="$(mktemp)"
-            if jq '.postCreateCommand = "chown -R 1000:1000 /var/www/html 2>/dev/null || true && cp ${containerWorkspaceFolder}/.devcontainer/alias.bashrc ~/.bash_aliases"' \
-                .devcontainer/devcontainer.json > "$tmpfile"; then
-                mv "$tmpfile" .devcontainer/devcontainer.json
-            else
-                rm -f "$tmpfile"
-                echo "jq failed (devcontainer.json likely contains comments). Falling back to sed..."
-                # Fallback to a more robust sed command if jq isn't available or fails
-                # This finds the postCreateCommand line and replaces its value, preserving a potential trailing comma.
-                sed -i.bak 's#^\(\s*"postCreateCommand":\s*"\)[^"]*"\(\s*,*\s*\)$#\1chown -R 1000:1000 /var/www/html 2>/dev/null || true \&\& cp ${containerWorkspaceFolder}/.devcontainer/alias.bashrc ~/.bash_aliases"\2#' .devcontainer/devcontainer.json || true
-                rm -f .devcontainer/devcontainer.json.bak
-            fi
-        else
-            # Fallback to sed when jq isn't available
-            sed -i.bak 's#^\(\s*"postCreateCommand":\s*"\)[^"]*"\(\s*,*\s*\)$#\1chown -R 1000:1000 /var/www/html 2>/dev/null || true \&\& cp ${containerWorkspaceFolder}/.devcontainer/alias.bashrc ~/.bash_aliases"\2#' .devcontainer/devcontainer.json || true
-            rm -f .devcontainer/devcontainer.json.bak
+        # Determine the correct compose file (Sail might generate docker-compose.yml or compose.yaml)
+        COMPOSE_FILE="../docker-compose.yml"
+        if [ -f "compose.yaml" ]; then
+            COMPOSE_FILE="../compose.yaml"
         fi
-        echo "Updated .devcontainer/devcontainer.json postCreateCommand"
+
+        # Overwrite devcontainer.json with stub content
+        # Note: We use the embedded content to ensure portability (e.g. curl | bash)
+        cat > .devcontainer/devcontainer.json << EOF
+// https://aka.ms/devcontainer.json
+{
+    "name": "Laravel app",
+    "dockerComposeFile": ["$COMPOSE_FILE"],
+    "service": "laravel.test",
+    "workspaceFolder": "/var/www/html",
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "laravel.vscode-laravel",
+                "mikestead.dotenv",
+                "amiralizadeh9480.laravel-extra-intellisense",
+                "onecentlin.laravel5-snippets",
+                "onecentlin.laravel-blade",
+                "laravel.vscode-laravel",
+                "bmewburn.vscode-intelephense-client",
+                "shufo.vscode-blade-formatter"
+            ],
+            "settings": {}
+        }
+    },
+    "remoteUser": "sail",
+    "postCreateCommand": "chown -R 1000:1000 /var/www/html 2>/dev/null || true && cp \${containerWorkspaceFolder}/.devcontainer/alias.bashrc ~/.bash_aliases"
+    // "forwardPorts": [],
+    // "runServices": [],
+    // "shutdownAction": "none",
+}
+EOF
+        echo "Updated .devcontainer/devcontainer.json from stub"
     else
         echo "Warning: .devcontainer/devcontainer.json not found. Cannot update postCreateCommand."
     fi
