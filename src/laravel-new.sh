@@ -135,7 +135,7 @@ EOL
         if command -v jq &>/dev/null; then
             tmpfile="$(mktemp)"
             if jq '.postCreateCommand = "chown -R 1000:1000 /var/www/html 2>/dev/null || true && cp ${containerWorkspaceFolder}/.devcontainer/alias.bashrc ~/.bash_aliases"' \
-                .devcontainer/devcontainer.json > "$tmpfile"; then
+                .devcontainer/devcontainer.json > "$tmpfile" 2>/dev/null; then
                 mv "$tmpfile" .devcontainer/devcontainer.json
             else
                 rm -f "$tmpfile"
