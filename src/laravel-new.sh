@@ -75,7 +75,8 @@ if [ -n "${AUTO_ACCEPT:-}" ]; then
 fi
 
 # Compose full inner command
-INNER_CMD="$INSTALL_CMD && cd \"$APP_NAME\" && php ./artisan sail:install --with=$SERVICES --devcontainer"
+# Laravel 13+ no longer includes laravel/sail by default, so we require it explicitly
+INNER_CMD="$INSTALL_CMD && cd \"$APP_NAME\" && composer require laravel/sail --dev --no-interaction && php ./artisan sail:install --with=$SERVICES --devcontainer"
 
 # Run Laravel installer inside Docker
 docker run --rm --interactive $DOCKER_TTY \
