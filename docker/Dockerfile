@@ -3,7 +3,7 @@ FROM debian:latest
 # Set non-interactive mode for apt
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Debug the version of the image
+# Log the version of the image
 RUN cat /etc/debian_version && cat /etc/os-release
 
 # Update package list and install dependencies
@@ -18,13 +18,11 @@ RUN apt-get update && apt-get install -y \
     gnupg2 \
     && rm -rf /var/lib/apt/lists/*
 
-# Add Sury PHP repository (alternative to PPA for Debian)
+# Add Sury PHP repository and install PHP 8.4 with required extensions
 RUN curl -sSLo /usr/share/keyrings/deb.sury.org-php.gpg https://packages.sury.org/php/apt.gpg \
     && echo "deb [signed-by=/usr/share/keyrings/deb.sury.org-php.gpg] https://packages.sury.org/php/ $(lsb_release -sc) main" > /etc/apt/sources.list.d/php.list \
-    && apt-get update
-
-# Install PHP 8.4 and required extensions
-RUN apt-get install -y \
+    && apt-get update \
+    && apt-get install -y \
     php8.4 \
     php8.4-cli \
     php8.4-mbstring \
@@ -47,7 +45,7 @@ RUN php -v && composer --version
 
 RUN git clone https://github.com/laravel/installer laravel-installer && \
     cd laravel-installer && \
-    composer install && \
+    composer install --optimize-autoloader && \
     ln -s /laravel-installer/bin/laravel /usr/bin/laravel && \
     chmod +x /usr/bin/laravel
 
